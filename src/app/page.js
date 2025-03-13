@@ -10,7 +10,7 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import { FaBrain } from "react-icons/fa"; // Ganti ikon ke FaBrain
+import { FaPaperPlane } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -18,9 +18,8 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [messages, setMessages] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [messagesPerPage] = useState(5); // Jumlah pesan per halaman
+  const [messagesPerPage] = useState(5);
 
-  // Ambil data pesan dari Firestore
   useEffect(() => {
     const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -34,7 +33,6 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
-  // Hitung pesan yang akan ditampilkan di halaman saat ini
   const indexOfLastMessage = currentPage * messagesPerPage;
   const indexOfFirstMessage = indexOfLastMessage - messagesPerPage;
   const currentMessages = messages.slice(
@@ -42,7 +40,6 @@ export default function Home() {
     indexOfLastMessage
   );
 
-  // Fungsi untuk mengubah halaman
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const handleSubmit = async (e) => {
@@ -53,21 +50,19 @@ export default function Home() {
         timestamp: serverTimestamp(),
       });
       setSubmitted(true);
-      setMessage(""); // Reset input setelah submit
-      setTimeout(() => setSubmitted(false), 3000); // Hilangkan alert setelah 3 detik
+      setMessage("");
+      setTimeout(() => setSubmitted(false), 3000);
     } catch (error) {
       console.error("Error submitting message:", error);
     }
   };
 
-  // Animasi untuk halaman
   const pageVariants = {
     initial: { opacity: 0, y: -50 },
     animate: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: 50 },
   };
 
-  // Animasi untuk alert
   const alertVariants = {
     hidden: { opacity: 0, x: 100 },
     visible: { opacity: 1, x: 0 },
@@ -83,7 +78,6 @@ export default function Home() {
       transition={{ duration: 0.5 }}
       className="min-h-screen flex justify-center bg-gradient-to-br from-gray-900 to-black sm:p-0 md:p-12"
     >
-      {/* Alert */}
       <AnimatePresence>
         {submitted && (
           <motion.div
@@ -101,13 +95,12 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Konten Utama */}
       <div className="max-w-xl w-full p-6">
-        {/* Judul dengan Ikon Pesan (Sticky) */}
-        <div className="sticky top-0 z-10 bg-gradient-to-br from-gray-900 to-black/90 backdrop-blur-md py-6 mb-6 border-b-2 border-gray-700/50">
+        {/* Judul Tanpa Sticky */}
+        <div className="mb-6">
           <h1 className="text-[25px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
-            <FaBrain className="mr-3 text-purple-500" />
-            give advice
+            <FaPaperPlane className="mr-3 text-purple-500" />
+            Send Messages
           </h1>
         </div>
 
