@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "../firebase";
+import { db } from "../firebase"; // Pastikan Firebase sudah diinisialisasi
 import {
   collection,
   addDoc,
@@ -20,8 +20,9 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [messagesPerPage] = useState(5);
 
+  // Ambil data feedback dari Firestore
   useEffect(() => {
-    const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
+    const q = query(collection(db, "feedbackDB"), orderBy("date", "desc"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const messagesData = [];
       querySnapshot.forEach((doc) => {
@@ -42,12 +43,27 @@ export default function Home() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const nextPage = () => {
+    if (currentPage < Math.ceil(messages.length / messagesPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Kirim feedback ke Firestore
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, "messages"), {
-        message: message,
-        timestamp: serverTimestamp(),
+      await addDoc(collection(db, "feedbackDB"), {
+        from: "Web User", // Identifikasi pengguna web
+        feedback: message,
+        date: serverTimestamp(),
+        source: "web", // Tambahkan source untuk membedakan feedback dari web
       });
       setSubmitted(true);
       setMessage("");
@@ -96,7 +112,7 @@ export default function Home() {
       </AnimatePresence>
 
       <div className="max-w-xl w-full p-6">
-        {/* Judul Tanpa Sticky */}
+        {/* Judul */}
         <div className="mb-6">
           <h1 className="text-[25px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
             <FaPaperPlane className="mr-3 text-purple-500" />
@@ -126,25 +142,20 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-4">
             Messages
           </h2>
-          <div className="space-y-4">
-            {currentMessages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-gray-700/50 p-4 rounded-lg border border-gray-600/50"
-              >
-                <p className="text-white">{msg.message}</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  {new Date(msg.timestamp?.toDate()).toLocaleString()}
-                </p>
-              </motion.div>
-            ))}
-          </div>
 
           {/* Pagination */}
-          <div className="flex justify-center mt-6 space-x-2">
+          <div className="flex justify-center mb-6 space-x-2">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-lg ${
+                currentPage === 1
+                  ? "bg-gray-700/50 text-gray-400 cursor-not-allowed"
+                  : "bg-cyan-500 text-white hover:bg-cyan-600"
+              }`}
+            >
+              Prev
+            </button>
             {Array.from({
               length: Math.ceil(messages.length / messagesPerPage),
             }).map((_, index) => (
@@ -159,6 +170,37 @@ export default function Home() {
               >
                 {index + 1}
               </button>
+            ))}
+            <button
+              onClick={nextPage}
+              disabled={
+                currentPage === Math.ceil(messages.length / messagesPerPage)
+              }
+              className={`px-4 py-2 rounded-lg ${
+                currentPage === Math.ceil(messages.length / messagesPerPage)
+                  ? "bg-gray-700/50 text-gray-400 cursor-not-allowed"
+                  : "bg-cyan-500 text-white hover:bg-cyan-600"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {currentMessages.map((msg) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-gray-700/50 p-4 rounded-lg border border-gray-600/50"
+              >
+                <p className="text-white">{msg.feedback}</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  From: {msg.from} |{" "}
+                  {new Date(msg.date?.toDate()).toLocaleString()}
+                </p>
+              </motion.div>
             ))}
           </div>
         </div>
